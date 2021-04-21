@@ -18,6 +18,7 @@ const char data[] = "what time is it";
 int lastSecond = 0;
 int step = 0;
 void updateMainColor(int colorR, int colorG, int colorB);
+// Объявляем задействованные дискретные каналы контроллера для связи
 
 //адресса переменных для сохранения данных
 #define EE_LED_MODE 0
@@ -28,15 +29,15 @@ void updateMainColor(int colorR, int colorG, int colorB);
 #define EE_LED_COLOR_B 5
 //запись элемента code
 
-const char *ssid = "ssid";             // имя вашей сети
+const char *ssid = "Ssid";         // имя вашей сети
 const char *password = "password"; // пароль вашей сети
 
 IPAddress Ip(192, 168, 1, 200);     // IP-адрес для ESP
 IPAddress Gateway(192, 168, 1, 1);  // IP-адрес шлюза (роутера)
 IPAddress Subnet(255, 255, 255, 0); // маска подсети, диапазон IP-адресов в локальной сети
 
-#define LED_COUNT 15 // число пикселей в ленте
-#define LED_DT 2     // пин, куда подключен DIN ленты (номера пинов ESP8266 нифига не совпадает с Arduino)
+#define LED_COUNT 300 // число пикселей в ленте
+#define LED_DT 2      // пин, куда подключен DIN ленты (номера пинов ESP8266 нифига не совпадает с Arduino)
 
 uint8_t bright = 25; // яркость (0 - 255)
 uint8_t ledMode = 0; // эффект (0 - 29)
@@ -60,10 +61,10 @@ ESP8266WebServer server(80);
 class Schedule
 {
 public:
-  int hour = 0, min = 0;
-  int colorR = 0, colorB = 0, colorG = 0;
-  int ledModeS = 0, ledBright = 0, ledSpeed = 0;
-  Schedule(int _hour, int _min, int _colorR, int _colorG, int _colorB, int _ledMode, int _ledBright, int _ledSpeed)
+  uint8_t hour = 0, min = 0;
+  uint8_t colorR = 0, colorB = 0, colorG = 0;
+  uint8_t ledModeS = 0, ledBright = 0, ledSpeed = 0;
+  Schedule(uint8_t _hour, uint8_t _min, uint8_t _colorR, uint8_t _colorG, uint8_t _colorB, uint8_t _ledMode, uint8_t _ledBright, uint8_t _ledSpeed)
   {
     hour = _hour;
     min = _min;
@@ -74,7 +75,7 @@ public:
     ledBright = _ledBright;
     ledSpeed = _ledSpeed;
   }
-  boolean scheduleFound(int _hour, int _min)
+  boolean scheduleFound(uint8_t _hour, uint8_t _min)
   {
     if (hour == _hour && min == _min)
     {
@@ -141,7 +142,16 @@ void setup()
   }
 
   //установка данных ленты до выключения ленты(вдруг свет отключили или еще что то там...)
-  ledMode = EEPROM.read(EE_LED_MODE);
+  if (EEPROM.read(EE_LED_MODE) > 17)
+  {
+    ledMode = 3;
+  }
+  else
+  {
+    ledMode = EEPROM.read(EE_LED_MODE);
+  }
+  //EEPROM.read(EE_LED_MODE); TODO: если тяжелые эффекты то ставить простенькие эффекты взамен
+  //ПЛОХИЕ ЭФФЕКТЫ 31 32 33 34 35
   bright = EEPROM.read(EE_LED_BRIGHT);
   delayValue = EEPROM.read(EE_LED_SPEED);
   updateMainColor(EEPROM.read(EE_LED_COLOR_R), EEPROM.read(EE_LED_COLOR_G), EEPROM.read(EE_LED_COLOR_B));
@@ -186,12 +196,12 @@ void startSchedule(Schedule *sheduleArray)
   }
 };
 
-//Создание своего расписания для отображения по времени (часы(0-24), минуты(0-59), цвет красный (0-255), зеленый (0-255), синий (0-255),режим эффекта(0-40), яркость (0-255), скорость(20-400))
-Schedule myShedule1(8, 32, 251, 255, 251, 2, 251, 225);
-Schedule myShedule2(8, 33, 252, 254, 252, 3, 242, 224);
-Schedule myShedule3(8, 34, 253, 253, 253, 4, 233, 223);
-Schedule myShedule4(8, 35, 254, 252, 254, 5, 224, 222);
-Schedule myShedule5(8, 36, 255, 251, 255, 6, 215, 221);
+//Создание своего расписания для отображения по времени (часы(0-24), минуты(0-59), цвет красный (0-255), зеленый (0-255), синий (0-255),режим эффекта(0-40), яркость (0-255), скорость(20-100))
+Schedule myShedule1(0, 00, 209, 31, 191, 17, 66, 3);
+Schedule myShedule2(0, 30, 209, 31, 191, 17, 6, 3);
+Schedule myShedule3(6, 00, 209, 31, 191, 16, 233, 3);
+Schedule myShedule4(19, 00, 255, 0, 157, 36, 224, 3);
+Schedule myShedule5(23, 00, 255, 0, 157, 29, 75, 221);
 //вставляем все наши расписания в один массив и чтобы работало в функции loop() запускаем функцию startSchedule(); вставив в параметр наш массив.
 Schedule sheduleArray[] = {myShedule1, myShedule2, myShedule3, myShedule4, myShedule5};
 

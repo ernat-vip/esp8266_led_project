@@ -1,24 +1,30 @@
-uint8_t idex = 0; //индекс текущего пикселя
+int idex = 0;     //индекс текущего пикселя
 uint8_t ihue = 0; // тон цвета
 uint8_t mainColorR = 0, mainColorG = 0, mainColorB = 0;
-uint8_t saturationVal = 255;                 // насыщенность
-uint8_t ibright = 0;                         //значение яркости
-uint16_t TOP_INDEX = uint8_t(LED_COUNT / 2); // получаем середину ленты
-uint8_t EVENODD = LED_COUNT % 2;             //флаг проверки четности
-uint8_t bouncedirection = 0;                 //флаг для color_bounce()
-int ledsX[LED_COUNT][3];                     //массив для сохранения случайных значений пикселя
+uint8_t saturationVal = 255;        // насыщенность
+uint8_t ibright = 0;                //значение яркости
+int TOP_INDEX = int(LED_COUNT / 2); // получаем середину ленты
+int EVENODD = LED_COUNT % 2;        //флаг проверки четности
+int bouncedirection = 0;            //флаг для color_bounce()
+uint8_t ledsX[LED_COUNT][3];        //массив для сохранения случайных значений пикселя
 
 void updateMainColor(int r, int g, int b)
 {
   mainColorR = r;
   mainColorG = g;
   mainColorB = b;
-  Serial.println("updateMainColor()");
+  Serial.print("updateMainColor: R-");
+  Serial.print(r);
+  Serial.print(" G-");
+  Serial.print(g);
+  Serial.print(" B-");
+  Serial.print(b);
+  Serial.println();
 }
 
 void updateColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  for (uint8_t i = 0; i < LED_COUNT; i++)
+  for (int i = 0; i < LED_COUNT; i++)
   {
     leds[i].setRGB(r, g, b);
   }
@@ -26,7 +32,7 @@ void updateColor(uint8_t r, uint8_t g, uint8_t b)
 
 void oneColor()
 {
-  for (uint8_t i = 0; i < LED_COUNT; i++)
+  for (int i = 0; i < LED_COUNT; i++)
   {
     leds[i].setRGB(mainColorR, mainColorG, mainColorB);
   }
@@ -1325,7 +1331,7 @@ void RGBLoop()
 
 void colorWipe(int SpeedDelay)
 {
-  for (uint16_t i = 0; i < LED_COUNT; i++)
+  for (int i = 0; i < LED_COUNT; i++)
   {
     setPixel(i, mainColorR, mainColorG, mainColorB);
     FastLED.show();
@@ -1338,7 +1344,7 @@ void colorWipe(int SpeedDelay)
       delay(delayValue);
     }
   }
-  for (uint16_t i = 0; i < LED_COUNT; i++)
+  for (int i = 0; i < LED_COUNT; i++)
   {
     setPixel(i, 0, 0, 0);
     FastLED.show();
@@ -1356,7 +1362,7 @@ void colorWipe(int SpeedDelay)
 void colorWipe2(int SpeedDelay)
 {
   int size = LED_COUNT / 4;
-  for (uint16_t i = 0; i < LED_COUNT; i++)
+  for (int i = 0; i < LED_COUNT; i++)
   {
     setPixel(i, mainColorR, mainColorG, mainColorB);
     if (i - size >= 0)
@@ -1381,7 +1387,7 @@ void colorWipe2(int SpeedDelay)
 void longColorWipe(int SpeedDelay)
 {
   int size = LED_COUNT / 2;
-  for (uint16_t i = 0; i < LED_COUNT; i++)
+  for (int i = 0; i < LED_COUNT; i++)
   {
     setPixel(i, mainColorR, mainColorG, mainColorB);
     if (i - size >= 0)
