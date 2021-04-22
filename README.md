@@ -7,3 +7,5 @@
 <br>-добавлены новые эффекты анимации.
 <br color="green"> мини обзорчик от меня:  https://youtu.be/Yv12F8dLoys
 [![Watch the video](https://img.youtube.com/vi/Yv12F8dLoys/maxresdefault.jpg)](https://youtu.be/Yv12F8dLoys)
+- [x] более рабочий вариант стал
+- [ ] присутствуют проблемы при смене тяжелых эффектов
