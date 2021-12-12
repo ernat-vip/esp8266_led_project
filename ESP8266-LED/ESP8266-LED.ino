@@ -29,27 +29,27 @@ void updateMainColor(int colorR, int colorG, int colorB);
 #define EE_LED_COLOR_B 5
 //запись элемента code
 
-const char *ssid = "Ssid";         // имя вашей сети
-const char *password = "password"; // пароль вашей сети
+const char *ssid = "Sky";             // имя вашей сети
+const char *password = "alma3953543"; // пароль вашей сети
 
 IPAddress Ip(192, 168, 1, 200);     // IP-адрес для ESP
 IPAddress Gateway(192, 168, 1, 1);  // IP-адрес шлюза (роутера)
 IPAddress Subnet(255, 255, 255, 0); // маска подсети, диапазон IP-адресов в локальной сети
 
-#define LED_COUNT 300 // число пикселей в ленте
+#define LED_COUNT 844 // число пикселей в ленте
 #define LED_DT 2      // пин, куда подключен DIN ленты (номера пинов ESP8266 нифига не совпадает с Arduino)
 
-uint8_t bright = 25; // яркость (0 - 255)
-uint8_t ledMode = 0; // эффект (0 - 29)
+uint8_t bright = 255; // яркость (0 - 255)
+uint8_t ledMode = 0;  // эффект (0 - 29)
 
 uint8_t flag = 1; // флаг отмены эффекта
 
 CRGBArray<LED_COUNT> leds;
 
-uint8_t baseDelayValue = 20; // Базовая задержка
-uint8_t delayValue = 20;     // автовычисление задержки по скорости и базовой задержке(можно не изменять)
-uint8_t stepValue = 10;      // шаг по пикселям
-uint8_t hueValue = 0;        // тон цвета
+uint8_t baseDelayValue = 2; // Базовая задержка
+uint8_t delayValue = 20;    // автовычисление задержки по скорости и базовой задержке(можно не изменять)
+uint8_t stepValue = 1;      // шаг по пикселям
+uint8_t hueValue = 0;       // тон цвета
 boolean detectUser = false;
 
 // инициализация websocket на 81 порту
@@ -142,14 +142,7 @@ void setup()
   }
 
   //установка данных ленты до выключения ленты(вдруг свет отключили или еще что то там...)
-  if (EEPROM.read(EE_LED_MODE) > 17)
-  {
-    ledMode = 3;
-  }
-  else
-  {
-    ledMode = EEPROM.read(EE_LED_MODE);
-  }
+    ledMode = 31;//EEPROM.read(EE_LED_MODE);
   //EEPROM.read(EE_LED_MODE); TODO: если тяжелые эффекты то ставить простенькие эффекты взамен
   //ПЛОХИЕ ЭФФЕКТЫ 31 32 33 34 35
   bright = EEPROM.read(EE_LED_BRIGHT);
@@ -197,13 +190,12 @@ void startSchedule(Schedule *sheduleArray)
 };
 
 //Создание своего расписания для отображения по времени (часы(0-24), минуты(0-59), цвет красный (0-255), зеленый (0-255), синий (0-255),режим эффекта(0-40), яркость (0-255), скорость(20-100))
-Schedule myShedule1(0, 00, 209, 31, 191, 17, 66, 3);
-Schedule myShedule2(0, 30, 209, 31, 191, 17, 6, 3);
-Schedule myShedule3(6, 00, 209, 31, 191, 16, 233, 3);
-Schedule myShedule4(19, 00, 255, 0, 157, 36, 224, 3);
-Schedule myShedule5(23, 00, 255, 0, 157, 29, 75, 221);
+Schedule myShedule1(23, 00, 19, 0, 0, 17, 255, 3);
+Schedule myShedule2(6, 00, 255, 95, 0, 31, 255, 3);
+Schedule myShedule3(12, 00, 209, 31, 191, 16, 255, 3);
+Schedule myShedule4(20, 00, 169, 0, 113, 36, 255, 3);
 //вставляем все наши расписания в один массив и чтобы работало в функции loop() запускаем функцию startSchedule(); вставив в параметр наш массив.
-Schedule sheduleArray[] = {myShedule1, myShedule2, myShedule3, myShedule4, myShedule5};
+Schedule sheduleArray[] = {myShedule1, myShedule2, myShedule3, myShedule4};
 
 void loop()
 {
@@ -214,6 +206,10 @@ void loop()
   {
     ledEffect(ledMode);
   }
+  //Serial.print("eeProm LEDMODE: ");
+  //Serial.print(flag);
+  //Serial.print(" - - ");
+  //Serial.println(ledMode);
   startSchedule(sheduleArray); //запуск расписания можно отключить если не пользоваться
   /*просмотр сохраненных данных
   Serial.print("eeProm LEDMODE: ");
@@ -309,7 +305,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
       Serial.print("Speed: ");
       if (data.toInt() != 0)
       {
-        delayValue = (baseDelayValue * data.toInt()) / 20;
+        delayValue = (baseDelayValue * data.toInt());
       }
       Serial.print(data);
       Serial.print(" delay: ");
@@ -371,22 +367,22 @@ void ledEffect(int ledMode)
     updateColor(0, 0, 0);
     break;
   case 1:
-    rainbow_fade(20);
+    rainbow_fade(2);
     break;
   case 2:
-    rainbow_loop(20);
+    rainbow_loop(2);
     break;
   case 3:
-    new_rainbow_loop(5);
+    new_rainbow_loop(2);
     break;
   case 4:
-    random_march(40);
+    random_march(2);
     break;
   case 5:
-    rgb_propeller(25);
+    rgb_propeller(5);
     break;
   case 6:
-    rotatingRedBlue(40);
+    rotatingRedBlue(2);
     hueValue = 0;
     break;
   case 7:
@@ -396,39 +392,39 @@ void ledEffect(int ledMode)
     blueFire(55, 250, 15);
     break;
   case 9:
-    random_burst(20);
+    random_burst(2);
     break;
   case 10:
     flicker(20);
     break;
   case 11:
-    random_color_pop(35);
+    random_color_pop(5);
     break;
   case 12:
     Sparkle(255, 255, 255, delayValue);
     break;
   case 13:
-    color_bounce(20);
+    color_bounce(2);
     break;
   case 14:
-    color_bounceFADE(20);
+    color_bounceFADE(2);
     break;
   case 15:
-    red_blue_bounce(40);
+    red_blue_bounce(10);
     hueValue = 0;
     break;
   case 16:
-    rainbow_vertical(50);
-    stepValue = 15;
+    rainbow_vertical(3);
+    stepValue = 1;
     break;
   case 17:
-    matrix(50);
+    matrix(5);
     break;
 
   // тяжелые эффекты
   case 18:
     rwb_march();
-    delayValue = 80;
+    delayValue = 20;
     break;
   case 19:
     flame();
@@ -446,15 +442,15 @@ void ledEffect(int ledMode)
     break;
   case 23:
     kitt();
-    delayValue = 100;
+    delayValue = 10;
     break;
   case 24:
     rule30();
-    delayValue = 100;
+    delayValue = 10;
     break;
   case 25:
     fade_vertical();
-    delayValue = 60;
+    delayValue = 10;
     hueValue = 180;
     break;
   case 26:
@@ -464,16 +460,16 @@ void ledEffect(int ledMode)
     runnerChameleon();
     break;
   case 28:
-    blende(10);
+    blende();
     break;
   case 29:
-    blende_2(10);
+    blende_2();
     break;
   case 30: //новые эффекты
     oneColor();
     break;
   case 31:
-    runColor(20);
+    runColor(5);
     break;
   case 32:
     meteorRain(20);
@@ -501,6 +497,12 @@ void ledEffect(int ledMode)
     break;
   case 40:
     heartBeats();
+    break;
+  case 41:
+    meteorRainRGB(20);
+    break;
+  case 42:
+    new_rainbow_loop2(2);
   }
 }
 

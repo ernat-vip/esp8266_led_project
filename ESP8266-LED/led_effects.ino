@@ -7,6 +7,7 @@ int TOP_INDEX = int(LED_COUNT / 2); // получаем середину лен�
 int EVENODD = LED_COUNT % 2;        //флаг проверки четности
 int bouncedirection = 0;            //флаг для color_bounce()
 uint8_t ledsX[LED_COUNT][3];        //массив для сохранения случайных значений пикселя
+int myStepValue = 3;                //шаги для уменьшения
 
 void updateMainColor(int r, int g, int b)
 {
@@ -326,14 +327,29 @@ void fade_vertical()
   }
   int idexA = idex;
   int idexB = horizontal_index(idexA);
-  ibright = ibright + 10;
+  ibright = ibright + 2;//10;
+  if(myStepValue>0){
+    myStepValue--;
+    }else{
+      ihue++;
+      myStepValue=3;
+      }
+  
+  if (ihue > 255)
+  {
+    ihue = 0;
+  }
+  if (ibright < 5)
+  {
+    ibright = 5;
+  }
   if (ibright > 255)
   {
     ibright = 0;
   }
-  leds[idexA].setRGB(mainColorR, mainColorG, mainColorB); // = CHSV(hueValue, saturationVal, ibright);
+  leds[idexA] = CHSV(ihue, 255, ibright);//.setRGB(mainColorR, mainColorG, mainColorB); // = CHSV(hueValue, saturationVal, ibright);
   leds[idexA].fadeToBlackBy(ibright);
-  leds[idexB].setRGB(mainColorR, mainColorG, mainColorB); // = CHSV(hueValue, saturationVal, ibright);
+  leds[idexB] = CHSV(ihue, 255, ibright);//.setRGB(mainColorR, mainColorG, mainColorB); // = CHSV(hueValue, saturationVal, ibright);
   leds[idexB].fadeToBlackBy(ibright);
   LEDS.show();
   delay(delayValue);
@@ -438,14 +454,7 @@ void random_march(uint8_t minDelay)
     leds[idex].b = ledsX[iCCW][2];
   }
   LEDS.show();
-  if (delayValue < minDelay)
-  {
-    delay(minDelay);
-  }
-  else
-  {
-    delay(delayValue);
-  }
+  delay(1);
 }
 void copy_led_array()
 {
@@ -666,30 +675,44 @@ void matrix(uint8_t minDelay)
     leds[i].b = ledsX[i - 1][2];
   }
   LEDS.show();
-  if (delayValue < minDelay)
-  {
-    delay(minDelay);
-  }
-  else
-  {
     delay(delayValue);
-  }
 }
 
 // плавная вращающаяся радуга
 void new_rainbow_loop(uint8_t minDelay)
 {
-  ihue -= 1;
-  fill_rainbow(leds, LED_COUNT, ihue);
+  if(bouncedirection>0){
+        idex-=3;
+        if(idex<10){bouncedirection=0;}
+        }else{
+        idex+=3;
+        if(idex>16000){bouncedirection=1;}}
+  fill_rainbow(leds, LED_COUNT, idex, 255);
   LEDS.show();
-  if (delayValue < minDelay)
-  {
-    delay(minDelay);
-  }
-  else
-  {
-    delay(delayValue);
-  }
+  delay(delayValue);
+}
+
+void new_rainbow_loop2(uint8_t minDelay)//ADD
+{
+      if(bouncedirection>0){
+        idex-=3;
+        if(idex<10){bouncedirection=0;}
+        }else{
+        idex+=3;
+        if(idex>800){bouncedirection=1;}}
+        switch(myStepValue){
+          case 1:if(ihue<255){ihue++;}else{myStepValue=2;}
+          break;
+          case 2:if(ihue>252){ihue--;}else{myStepValue=1;}
+          break;
+          default:
+          myStepValue=1;
+          ihue = 252;
+          break;
+          }
+  fill_rainbow(leds, LED_COUNT, 600, ihue);
+  LEDS.show();
+  delay(200);
 }
 
 void setPixel(int Pixel, byte red, byte green, byte blue)
@@ -857,6 +880,19 @@ void Sparkle(byte red, byte green, byte blue, int SpeedDelay)
 // бегущие каждые 3 пикселя
 void theaterChase(byte red, byte green, byte blue, int SpeedDelay)
 {
+   for (int i = 0; i < LED_COUNT; i++)
+      {
+  if(myStepValue<0){
+    myStepValue=3;
+    setPixel(i, mainColorR, mainColorG, mainColorB);
+  }else{myStepValue--;
+  setPixel(i, 0, 0, 0);
+  }
+      }
+      FastLED.show();
+  delay(delayValue);
+  
+/*
   for (int j = 0; j < 10; j++)
   {
     for (int q = 0; q < 3; q++)
@@ -867,13 +903,14 @@ void theaterChase(byte red, byte green, byte blue, int SpeedDelay)
         //setPixel(i + q, red, green, blue);
       }
       FastLED.show();
-      delay(SpeedDelay);
-      for (int i = 0; i < LED_COUNT; i = i + 3)
+      delay(delayValue);
+      for (int i = 0; i < LED_COUNT; i++)
       {
         setPixel(i + q, 0, 0, 0);
       }
     }
   }
+  */
 }
 
 // стробоскопический эффект
@@ -958,19 +995,34 @@ void setPixelHeatColorBlue(int Pixel, byte temperature)
 //расплывающие цвета
 void fadeToCenter()
 {
-  static uint8_t hue;
+    if(idex > LED_COUNT / 2){idex=0;}else{
+    leds.fadeToBlackBy(2);
+    leds[idex] = CHSV(ihue++, 255, 255);
+    leds(LED_COUNT / 2, LED_COUNT - 1) = leds(LED_COUNT / 2 - 1, 0);
+    idex++;}
+    FastLED.delay(delayValue);
+  /*static uint8_t hue;
   for (int i = 0; i < LED_COUNT / 2; i++)
   {
     leds.fadeToBlackBy(40);
-    leds[i] = CHSV(hue++, 255, 255);
+    leds[i] = CHSV(ihue++, 255, 255);
     leds(LED_COUNT / 2, LED_COUNT - 1) = leds(LED_COUNT / 2 - 1, 0);
-    FastLED.delay(33);
-  }
+    FastLED.delay(delayValue);
+  }*/
 }
 
 //бегающий по кругу паровозик
 void runnerChameleon()
 {
+  if(idex+2>LED_COUNT){idex=0;}else{
+        idex++;
+        }
+  leds[idex] = CHSV(ihue++, 255, 255);
+    FastLED.show();
+    //leds[idex] = CRGB::Black;
+        fadeall();
+    delay(delayValue);
+  /*
   static uint8_t hue = 0;
   for (int i = 0; i < LED_COUNT; i++)
   {
@@ -979,11 +1031,58 @@ void runnerChameleon()
     leds[i] = CRGB::Black;
     //    fadeall();
     delay(10);
-  }
+  }*/
 }
 
-void blende(uint8_t minDelay)
+void blende()
 {
+  
+  if(idex>=0 && idex<=LED_COUNT){ 
+    int maxIdex=0;
+    int minIdex = 0;
+    switch(bouncedirection){ 
+      case 0:
+      if(idex+2>LED_COUNT){bouncedirection=1;}else{
+        maxIdex = idex+1;
+        }
+      for (; idex < maxIdex; idex++)
+  {
+    leds[idex] = CHSV(ihue++, 255, 255);
+    FastLED.show();
+    //leds[idex] = CRGB::Black;
+    fadeall();
+    delay(delayValue);
+
+    Serial.print("SW 1 - :");
+      Serial.println(idex);
+  }
+  break;
+  case 1:
+ if(idex-2<0){bouncedirection=0;}else{
+        maxIdex = idex-1;
+        }
+  for (; idex > maxIdex; idex--)
+  {
+    leds[idex] = CHSV(ihue++, 255, 255);
+    FastLED.show();
+    //     leds[i] = CRGB::Black;
+    fadeall();
+    delay(delayValue);
+
+    Serial.print("SW 2 -- :");
+      Serial.println(idex);
+  }
+  break;
+  }
+    }
+    if(idex>LED_COUNT){
+      idex=123;
+      Serial.print("ELSE - idex/flag:");
+      Serial.println(idex);
+      }
+ 
+  
+  /*
   static uint8_t hue = 0;
   for (int i = 0; i < LED_COUNT; i++)
   {
@@ -991,14 +1090,7 @@ void blende(uint8_t minDelay)
     FastLED.show();
     //     leds[i] = CRGB::Black;
     fadeall();
-    if (delayValue < minDelay)
-    {
-      delay(minDelay);
-    }
-    else
-    {
       delay(delayValue);
-    }
   }
 
   for (int i = (LED_COUNT)-1; i >= 0; i--)
@@ -1007,144 +1099,194 @@ void blende(uint8_t minDelay)
     FastLED.show();
     //     leds[i] = CRGB::Black;
     fadeall();
-    if (delayValue < minDelay)
-    {
-      delay(minDelay);
-    }
-    else
-    {
       delay(delayValue);
-    }
-  }
+  }*/
 }
 
-void blende_2(uint8_t minDelay)
+void blende_2()
 {
-  static uint8_t hue = 0;
-  for (int i = 0; i < LED_COUNT; i++)
+  if(idex>=0 && idex<=LED_COUNT){ 
+    int maxIdex=0;
+    int minIdex = 0;
+    switch(bouncedirection){ 
+      case 0:
+      if(idex+2>LED_COUNT){bouncedirection=1;}else{
+        maxIdex = idex+1;
+        }
+      for (; idex < maxIdex; idex++)
   {
-    leds[i] = CHSV(hue++, 255, 255);
+    leds[idex] = CHSV(ihue++, 255, 255);
+    FastLED.show();
+    leds[idex] = CRGB::Black;
+    fadeall();
+    delay(delayValue);
+
+    Serial.print("SW 1 - :");
+      Serial.println(idex);
+  }
+  break;
+  case 1:
+ if(idex-2<0){bouncedirection=0;}else{
+        maxIdex = idex-1;
+        }
+  for (; idex > maxIdex; idex--)
+  {
+    leds[idex] = CHSV(ihue++, 255, 255);
+    FastLED.show();
+    //     leds[i] = CRGB::Black;
+    fadeall();
+    delay(delayValue);
+
+    Serial.print("SW 2 -- :");
+      Serial.println(idex);
+  }
+  break;
+  }
+    }
+    if(idex>LED_COUNT){
+      idex=123;
+      Serial.print("ELSE - idex/flag:");
+      Serial.println(idex);
+      }
+  // DOWANDA
+  /*for (int i = 0; i < LED_COUNT; i++)
+  {
+    leds[i] = CHSV(ihue++, 255, 255);
     FastLED.show();
     leds[i] = CRGB::Black;
     fadeall();
-    if (delayValue < minDelay)
-    {
-      delay(minDelay);
-    }
-    else
-    {
-      delay(delayValue);
-    }
+    delay(delayValue);
   }
 
   for (int i = (LED_COUNT)-1; i >= 0; i--)
   {
-    leds[i] = CHSV(hue++, 255, 255);
+    leds[i] = CHSV(ihue++, 255, 255);
     FastLED.show();
     //     leds[i] = CRGB::Black;
     fadeall();
-    if (delayValue < minDelay)
-    {
-      delay(minDelay);
-    }
-    else
-    {
-      delay(delayValue);
-    }
-  }
+    delay(delayValue);
+  }*/
 }
 //служебная функция
 void fadeall()
 {
   for (int i = 0; i < LED_COUNT; i++)
   {
-    leds[i].nscale8(250);
+    leds[i].nscale8(254);//(250); 0-255 maxx_value
   }
 }
 //мои новые эффекты
 void heartBeats()
 {
   float r, g, b;
-
-  for (int k = 0; k < 140; k = k + 1)
-  {
-    delay(2);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
+  if(ihue>3 | ihue<0){ihue=0;idex=0;}
+  else{
+    switch(ihue){
+      case 0:
+      if(idex<=140){
+        Serial.println("0");
+        delay(2);
+    r = (idex / 256.0) * mainColorR;
+    g = (idex / 256.0) * mainColorG;
+    b = (idex / 256.0) * mainColorB;
     updateColor(r, g, b);
     FastLED.show();
-  }
-  delay(150);
-  for (int k = 140; k >= 15; k = k - 2)
-  {
-    delay(7);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
+    if(idex>=140){delay(150);ihue++;}
+    idex++;
+        }
+      break;
+      case 1:
+      if(idex>=15){
+        Serial.println("1");
+        delay(7);
+    r = (idex / 256.0) * mainColorR;
+    g = (idex / 256.0) * mainColorG;
+    b = (idex / 256.0) * mainColorB;
     updateColor(r, g, b);
     FastLED.show();
-  }
-  delay(150);
-  for (int k = 15; k < 255; k = k + 1)
-  {
-    delay(2);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
+    if(idex<=15){delay(150);ihue++;}
+    idex--;idex--;
+    }
+      break;
+      case 2:
+      if(idex<=255){
+        Serial.println("2");
+        delay(2);
+    r = (idex / 256.0) * mainColorR;
+    g = (idex / 256.0) * mainColorG;
+    b = (idex / 256.0) * mainColorB;
     updateColor(r, g, b);
     FastLED.show();
-  }
-  for (int k = 255; k >= 0; k = k - 2)
-  {
-    delay(1);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
+    if(idex>=255){delay(150);ihue++;}
+    idex++;
+        }
+      break;
+      case 3:
+      if(idex>=0){
+        Serial.println("3");
+        delay(1);
+    r = (idex / 256.0) * mainColorR;
+    g = (idex / 256.0) * mainColorG;
+    b = (idex / 256.0) * mainColorB;
     updateColor(r, g, b);
     FastLED.show();
-  }
-  delay(600);
+    if(idex<=0){delay(600);ihue=0;break;}
+    idex--;idex--;
+        }
+      break;
+      }
+    }
 }
 
 void impulse(int SpeedDelay)
 {
   float r, g, b;
-
-  for (int k = 30; k < 256; k = k + 1)
-  {
+  int MIN_LED_COUNT = 30;
+  int MAX_LED_COUNT = 256;
+    if(idex>=MIN_LED_COUNT && idex<=MAX_LED_COUNT){
+      switch (bouncedirection)
+    {
+    case 1:
+      idex++;
     delay(2);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
+    r = (idex / 256.0) * mainColorR;
+    g = (idex / 256.0) * mainColorG;
+    b = (idex / 256.0) * mainColorB;
     updateColor(r, g, b);
     FastLED.show();
-  }
-  delay(150);
-  for (int k = 255; k >= 30; k = k - 2)
-  {
-    delay(10);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
-    updateColor(r, g, b);
-    FastLED.show();
-  }
-  if (delayValue * 15 < SpeedDelay)
-  {
-    delay(SpeedDelay);
-  }
-  else
-  {
-    delay(delayValue * 15);
-  }
+    if(idex==MAX_LED_COUNT){delay(150);}
+      break;
+    case 0:
+      idex--;idex--;
+      delay(10);
+      r = (idex / 256.0) * mainColorR;
+      g = (idex / 256.0) * mainColorG;
+      b = (idex / 256.0) * mainColorB;
+      updateColor(r, g, b);
+      FastLED.show();
+      break;
+    }
+      }else{
+        switch (bouncedirection)
+    {
+    case 1:
+      idex=MAX_LED_COUNT;
+      bouncedirection=0;
+      break;
+    case 0:
+      idex=MIN_LED_COUNT;
+      bouncedirection=1;
+      break;
+    }
+        }
+    delay(delayValue);
 }
 
 void runColor(int SpeedDelay)
 {
   int Position = 0;
 
-  for (int i = 0; i < LED_COUNT * 2; i++)
+  for (int i = 0; i < 6; i++)
   {
     Position++;
     for (int i = 0; i < LED_COUNT; i++)
@@ -1155,24 +1297,54 @@ void runColor(int SpeedDelay)
     }
 
     FastLED.show();
-    if (delayValue < SpeedDelay)
-    {
-      delay(SpeedDelay);
-    }
-    else
-    {
-      delay(delayValue);
-    }
+    delay(5);
   }
 }
 
+void meteorRainRGB(int SpeedDelay)
+{
+if(idex>=0 && idex <=LED_COUNT)
+  {
+    // fade brightness all LEDs one step
+    for (int j = 0; j < LED_COUNT; j++)
+    {
+       
+      if ((!true) || (random(10) > 5))
+      {
+        fadeToBlack(j, random(5));
+      }
+    }
+    // draw meteor
+    for (int j = 0; j < random(10); j++)
+    {
+      if ((idex - j < LED_COUNT) && (idex - j >= 0))
+      {
+        //setPixel(idex - j, mainColorR, mainColorG, mainColorB);
+        if(myStepValue>0){
+          ihue = ihue++;
+          myStepValue--;
+          }else{
+            myStepValue=5;
+            ihue++;
+            }
+        if(++ihue>255){ihue=0;}
+        leds[idex] = CHSV(ihue, saturationVal, 255);
+      }
+    }
+    if(idex==LED_COUNT){
+      idex=1;}else{
+      idex++;
+      }
+    FastLED.show();
+    delay(delayValue);
+  }else{
+    idex=0;
+    }
+}
 void meteorRain(int SpeedDelay)
 {
-  setAll(0, 0, 0);
-
-  for (int i = 0; i < LED_COUNT + LED_COUNT; i++)
+if(idex>=0 && idex <=LED_COUNT)
   {
-
     // fade brightness all LEDs one step
     for (int j = 0; j < LED_COUNT; j++)
     {
@@ -1181,25 +1353,23 @@ void meteorRain(int SpeedDelay)
         fadeToBlack(j, random(5));
       }
     }
-
     // draw meteor
     for (int j = 0; j < random(10); j++)
     {
-      if ((i - j < LED_COUNT) && (i - j >= 0))
+      if ((idex - j < LED_COUNT) && (idex - j >= 0))
       {
-        setPixel(i - j, mainColorR, mainColorG, mainColorB);
+        setPixel(idex - j, mainColorR, mainColorG, mainColorB);
       }
     }
+
+    if(idex==LED_COUNT){idex=0;}else{
+      idex++;
+      }
     FastLED.show();
-    if (delayValue < SpeedDelay)
-    {
-      delay(SpeedDelay);
+    delay(delayValue);
+  }else{
+    idex=0;
     }
-    else
-    {
-      delay(delayValue);
-    }
-  }
 }
 
 // used by meteorrain
@@ -1230,182 +1400,335 @@ void fadeToBlack(int ledNo, byte fadeValue)
 
 void TwinkleRandom(int SpeedDelay, boolean OnlyOne)
 {
-  updateColor(0, 0, 0);
-
-  for (int i = 0; i < LED_COUNT / 2; i++)
-  {
-    setPixel(random(LED_COUNT), random(0, 255), random(0, 255), random(0, 255));
+    int MIN_LED_COUNT = 200;
+    int MAX_LED_COUNT = 210;
+    if(idex>=MIN_LED_COUNT && idex<=MAX_LED_COUNT){
+      switch (bouncedirection)
+    {
+    case 1:
+      idex++;
+      Serial.print(" idex+: ");
+      Serial.println(idex);
+      setPixel(random(LED_COUNT), random(0, 255), random(0, 255), random(0, 255));
+      break;
+    case 0:
+      idex--;
+      Serial.print(" idex-: ");
+      Serial.println(idex);
+      setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+       setPixel(random(LED_COUNT), 0, 0, 0);
+        setPixel(random(LED_COUNT), 0, 0, 0);
+         setPixel(random(LED_COUNT), 0, 0, 0);
+      break;
+    }
+      }else{
+        switch (bouncedirection)
+    {
+    case 1:
+      Serial.print("IF idex-: ");
+      Serial.println(idex);
+      idex=MAX_LED_COUNT;
+      bouncedirection=0;
+      setPixel(random(LED_COUNT), 0, 0, 0);
+      
+      break;
+    case 0:
+      Serial.print("ELSE idex-: ");
+      Serial.println(idex);
+      idex=MIN_LED_COUNT;
+      bouncedirection=1;
+      setPixel(random(LED_COUNT), random(0, 255), random(0, 255), random(0, 255));
+      break;
+    }
+        }
     FastLED.show();
-    if (delayValue < SpeedDelay)
-    {
-      delay(SpeedDelay);
-    }
-    else
-    {
-      delay(delayValue);
-    }
-    if (OnlyOne)
-    {
-      updateColor(0, 0, 0);
-    }
-  }
-  FastLED.show();
-  if (delayValue < SpeedDelay)
-  {
-    delay(SpeedDelay);
-  }
-  else
-  {
-    delay(delayValue);
-  }
+    delay(delayValue); 
 }
 
 void FadeInOut()
 {
   float r, g, b;
-
-  for (int k = 0; k < 256; k = k + 1)
-  {
-    delay(10);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
+  
+    int MIN_LED_COUNT = 10;
+    int MAX_LED_COUNT = 255;
+    if(idex>=MIN_LED_COUNT && idex<=MAX_LED_COUNT){
+      switch (bouncedirection)
+    {
+    case 1:
+      idex++;
+      delay(10);
+    r = (idex / 256.0) * mainColorR;
+    g = (idex / 256.0) * mainColorG;
+    b = (idex / 256.0) * mainColorB;
     updateColor(r, g, b);
     FastLED.show();
-  }
-  delay(430);
-  for (int k = 255; k >= 0; k = k - 2)
-  {
-    delay(10);
-    r = (k / 256.0) * mainColorR;
-    g = (k / 256.0) * mainColorG;
-    b = (k / 256.0) * mainColorB;
+    if(idex==255){delay(430);}
+      break;
+    case 0:
+      idex--;
+      delay(10);
+    r = (idex / 256.0) * mainColorR;
+    g = (idex / 256.0) * mainColorG;
+    b = (idex / 256.0) * mainColorB;
     updateColor(r, g, b);
     FastLED.show();
-  }
-  delay(390);
+    if(idex==10){delay(390);}
+      break;
+    }
+      }else{
+        switch (bouncedirection)
+    {
+    case 1:
+      idex=MAX_LED_COUNT;
+      bouncedirection=0;
+      break;
+    case 0:
+      idex=MIN_LED_COUNT;
+      bouncedirection=1;
+      break;
+    }
+        }
 }
 
 void RGBLoop()
-{
-  for (int j = 0; j < 3; j++)
-  {
-    // Fade IN
-    for (int k = 0; k < 256; k++)
+{   
+    if(ihue>=0 && ihue<=2){}else{ihue=0;}
+    int MIN_LED_COUNT = 1;
+    int MAX_LED_COUNT = 255;
+    if(idex>=MIN_LED_COUNT && idex<=MAX_LED_COUNT){
+      switch (bouncedirection)
     {
-      switch (j)
+    case 1:
+      Serial.print("BOUNCEDIR - 1 - ihue:");
+      Serial.println(ihue);
+      idex=idex+1;
+      switch (ihue)
       {
       case 0:
-        updateColor(k, 0, 0);
+      Serial.print("1 case 0 - ");
+      Serial.print(" idex: ");
+      Serial.print(idex);
+      Serial.print(" ihue: ");
+      Serial.println(ihue);
+      updateColor(idex, 0, 0);
+      if(idex==MAX_LED_COUNT){bouncedirection=0;}
         break;
       case 1:
-        updateColor(0, k, 0);
+      Serial.print("1 case 1 - ");
+      Serial.print(" idex: ");
+      Serial.print(idex);
+      Serial.print(" ihue: ");
+      Serial.println(ihue);
+        updateColor(0, idex, 0);
+        if(idex==MAX_LED_COUNT){bouncedirection=0;}
         break;
       case 2:
-        updateColor(0, 0, k);
+      Serial.print("1 case 2 - ");
+      Serial.print(" idex: ");
+      Serial.print(idex);
+      Serial.print(" ihue: ");
+      Serial.println(ihue);
+        updateColor(0, 0, idex);
+        if(idex==MAX_LED_COUNT){bouncedirection=0;}
         break;
       }
       FastLED.show();
       delay(3);
-    }
-    // Fade OUT
-    for (int k = 255; k >= 0; k--)
-    {
-      switch (j)
+      break;
+    case 0:
+      Serial.print("BOUNCEDIR - 0 - ihue:");
+      Serial.println(ihue);
+      idex=idex-1;
+      switch (ihue)
       {
       case 0:
-        updateColor(k, 0, 0);
+        updateColor(idex, 0, 0);
+         Serial.print("0 case 0 - ");
+      Serial.print(" idex: ");
+      Serial.print(idex);
+      Serial.print(" ihue: ");
+      Serial.println(ihue);
+        if(idex==MIN_LED_COUNT){bouncedirection=1;ihue=1;}
         break;
       case 1:
-        updateColor(0, k, 0);
+       Serial.print("0 case 1 - ");
+      Serial.print(" idex: ");
+      Serial.print(idex);
+      Serial.print(" ihue: ");
+      Serial.println(ihue);
+        updateColor(0, idex, 0);
+        if(idex==MIN_LED_COUNT){bouncedirection=1;ihue=2;}
         break;
       case 2:
-        updateColor(0, 0, k);
+       Serial.print("0   case 2 - ");
+      Serial.print(" idex: ");
+      Serial.print(idex);
+      Serial.print(" ihue: ");
+      Serial.println(ihue);
+        updateColor(0, 0, idex);
+        if(idex==MIN_LED_COUNT){bouncedirection=1;ihue=0;}
         break;
       }
       FastLED.show();
       delay(3);
+      break;
     }
-  }
+      }else{
+        switch (bouncedirection)
+    {
+    case 1:
+      Serial.print("IF idex-: ");
+      Serial.println(idex);
+      idex=MAX_LED_COUNT;
+      bouncedirection=0;
+      break;
+    case 0:
+      Serial.print("ELSE idex-: ");
+      Serial.println(idex);
+      idex=MIN_LED_COUNT;
+      bouncedirection=1;
+      //ihue++;
+      break;
+    }
+        }
+    FastLED.show();
+    delay(delayValue);
 }
 
 void colorWipe(int SpeedDelay)
 {
-  for (int i = 0; i < LED_COUNT; i++)
+  int COLOR_WIPE_LED_COUNT = 0;
+  if (idex + 2 > LED_COUNT)
   {
-    setPixel(i, mainColorR, mainColorG, mainColorB);
-    FastLED.show();
-    if (delayValue < SpeedDelay)
+    idex = 0;
+    switch (bouncedirection)
     {
-      delay(SpeedDelay);
-    }
-    else
-    {
-      delay(delayValue);
+    case 1:
+      bouncedirection = 0;
+      break;
+    case 0:
+      bouncedirection = 1;
+      break;
     }
   }
-  for (int i = 0; i < LED_COUNT; i++)
+  COLOR_WIPE_LED_COUNT = idex + 1;
+  if (bouncedirection == 0)
   {
-    setPixel(i, 0, 0, 0);
-    FastLED.show();
-    if (delayValue < SpeedDelay)
+    for (; idex <= COLOR_WIPE_LED_COUNT; idex++)
     {
-      delay(SpeedDelay);
+      setPixel(idex, mainColorR, mainColorG, mainColorB);
+      FastLED.show();
+      Serial.print("idex: ");
+      Serial.println(idex);
+        delay(delayValue);
     }
-    else
+  }
+  else
+  {
+    for (; idex <= COLOR_WIPE_LED_COUNT; idex++)
     {
-      delay(delayValue);
+      setPixel(idex, 0, 0, 0);
+      FastLED.show();
+      Serial.print("idex: ");
+      Serial.println(idex);
+        delay(delayValue);
     }
   }
 }
 
 void colorWipe2(int SpeedDelay)
 {
-  int size = LED_COUNT / 4;
-  for (int i = 0; i < LED_COUNT; i++)
+  int COLOR_WIPE_LED_COUNT = 0;
+  if (idex + 2 > LED_COUNT)
   {
-    setPixel(i, mainColorR, mainColorG, mainColorB);
-    if (i - size >= 0)
+    idex = 0;
+    switch (bouncedirection)
     {
-      setPixel(i - size, 0, 0, 0);
+    case 1:
+      bouncedirection = 0;
+      break;
+    case 0:
+      bouncedirection = 1;
+      break;
+    }
+  }
+  COLOR_WIPE_LED_COUNT = idex + 1;
+  
+  int size = LED_COUNT / 4;
+  for (; idex <= COLOR_WIPE_LED_COUNT; idex++)
+  {
+    setPixel(idex, mainColorR, mainColorG, mainColorB);
+    if (idex - size >= 0)
+    {
+      setPixel(idex - size, 0, 0, 0);
     }
     else
     {
-      setPixel(LED_COUNT - size + i, 0, 0, 0);
+      setPixel(LED_COUNT - size + idex, 0, 0, 0);
     }
     FastLED.show();
-    if (delayValue < SpeedDelay)
-    {
-      delay(SpeedDelay);
-    }
-    else
-    {
-      delay(delayValue);
-    }
+    delay(delayValue);
   }
 }
 void longColorWipe(int SpeedDelay)
 {
-  int size = LED_COUNT / 2;
-  for (int i = 0; i < LED_COUNT; i++)
+  int COLOR_WIPE_LED_COUNT = 0;
+  if (idex + 2 > LED_COUNT)
   {
-    setPixel(i, mainColorR, mainColorG, mainColorB);
-    if (i - size >= 0)
+    idex = 0;
+    switch (bouncedirection)
     {
-      setPixel(i - size, 0, 0, 0);
+    case 1:
+      bouncedirection = 0;
+      break;
+    case 0:
+      bouncedirection = 1;
+      break;
+    }
+  }
+  COLOR_WIPE_LED_COUNT = idex + 1;
+  
+  int size = LED_COUNT / 2;
+  for (; idex <= COLOR_WIPE_LED_COUNT; idex++)
+  {
+    setPixel(idex, mainColorR, mainColorG, mainColorB);
+    if (idex - size >= 0)
+    {
+      setPixel(idex - size, 0, 0, 0);
     }
     else
     {
-      setPixel(LED_COUNT - size + i, 0, 0, 0);
+      setPixel(LED_COUNT - size + idex, 0, 0, 0);
     }
     FastLED.show();
-    if (delayValue < SpeedDelay)
-    {
-      delay(SpeedDelay);
-    }
-    else
-    {
-      delay(delayValue);
-    }
+    delay(delayValue);
   }
 }
